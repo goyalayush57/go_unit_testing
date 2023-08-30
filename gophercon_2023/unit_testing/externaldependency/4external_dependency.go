@@ -7,7 +7,6 @@ import (
 	"gophercon_2023/unit_testing/externaldependency/model"
 )
 
-//https://ports.macports.org/port/go-mockgen/
 type RegistrationService interface {
 	Register(name, email, pass string) error
 }
@@ -50,8 +49,8 @@ func (a *register) Register(name, email, encryptPass string) error {
 	return nil
 }
 
-/* Register
-1. verify the same name does not exist
+/* Register. registers the user into database
+1. verify the same name does not exist in cache
 2. put it in db
 3. put it in cache
 4. return success/err

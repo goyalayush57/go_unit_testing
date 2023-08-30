@@ -17,6 +17,5 @@ func (api *API) DoStuff() (statuscode int, body []byte, err error) {
 	}
 	defer resp.Body.Close()
 	body, err = ioutil.ReadAll(resp.Body)
-	// handling error and doing stuff with body that needs to be unit tested
 	return resp.StatusCode, body, err
 }
