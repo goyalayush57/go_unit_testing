@@ -1,2 +1,2 @@
-# go_unit_testing
-It contains solution to methods and functions that are hard to unit test in GO
+# go_unittesting
+Contains approaches to unit test functionas and methods in GO

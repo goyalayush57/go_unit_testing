@@ -1,4 +1,4 @@
-module gophercon_2023/unit_testing
+module gophercon_2023/unittesting
 
 go 1.18
 

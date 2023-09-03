@@ -2,9 +2,9 @@ package external
 
 import (
 	"fmt"
-	caches "gophercon_2023/unit_testing/externaldependency/cache"
-	database "gophercon_2023/unit_testing/externaldependency/db"
-	"gophercon_2023/unit_testing/externaldependency/model"
+	caches "gophercon_2023/unittesting/externaldependency/cache"
+	database "gophercon_2023/unittesting/externaldependency/db"
+	"gophercon_2023/unittesting/externaldependency/model"
 )
 
 type RegistrationService interface {
@@ -27,14 +27,14 @@ type register struct {
 	cache CacheService
 }
 
-/* Register
+/* Register registers the user into database
 1. verify the same name does not exist
 2. put it in db
 3. put it in cache
 4. return success/err
 */
 func (a *register) Register(name, email, encryptPass string) error {
-	if !isValidName(name) || !isValidEmail(email) || !isValidPass(encryptPass) {
+	if !isValid(name, email, encryptPass) {
 		return fmt.Errorf("The provided field is not valid")
 	}
 	if a.cache.Get(name) != "" {
@@ -49,14 +49,14 @@ func (a *register) Register(name, email, encryptPass string) error {
 	return nil
 }
 
-/* Register. registers the user into database
+/* Register registers the user into database
 1. verify the same name does not exist in cache
 2. put it in db
 3. put it in cache
 4. return success/err
 */
-func Register_noInterface(name, email, encryptPass string) error {
-	if !isValidName(name) || !isValidEmail(email) || !isValidPass(encryptPass) {
+func RegisterNoInterface(name, email, encryptPass string) error {
+	if !isValid(name, email, encryptPass) {
 		return fmt.Errorf("The provided field is not valid")
 	}
 
@@ -72,13 +72,6 @@ func Register_noInterface(name, email, encryptPass string) error {
 	return nil
 }
 
-func isValidName(string) bool {
-	return true
-}
-func isValidPass(string) bool {
-	return true
-}
-
-func isValidEmail(string) bool {
+func isValid(string, string, string) bool {
 	return true
 }
