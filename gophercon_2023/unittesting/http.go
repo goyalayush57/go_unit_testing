@@ -5,29 +5,29 @@ import (
 	"net/http"
 )
 
+func DoBadStuff(path string) (int, []byte, error) {
+	resp, err := http.Get("example.com" + path) //internally calls DefaultClient
+	if err != nil {
+		return http.StatusInternalServerError, []byte(""), err
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	//perform operations here
+	return resp.StatusCode, body, err
+}
+
 type API struct {
 	Client  *http.Client
 	baseURL string
 }
 
-func (api *API) DoGoodStuff() (statuscode int, body []byte, err error) {
-	resp, err := api.Client.Get(api.baseURL + "/some/path")
+func (api *API) DoGoodStuff(path string) (int, []byte, error) {
+	resp, err := api.Client.Get(api.baseURL + path)
 	if err != nil {
 		return http.StatusInternalServerError, []byte(""), err
 	}
 	defer resp.Body.Close()
-	body, err = ioutil.ReadAll(resp.Body)
-	//perform operations here
-	return resp.StatusCode, body, err
-}
-
-func DoBadStuff() (statuscode int, body []byte, err error) {
-	resp, err := http.Get("example.com" + "/some/path") //internally calls DefaultClient
-	if err != nil {
-		return http.StatusInternalServerError, []byte(""), err
-	}
-	defer resp.Body.Close()
-	body, err = ioutil.ReadAll(resp.Body)
+	body, err := ioutil.ReadAll(resp.Body)
 	//perform operations here
 	return resp.StatusCode, body, err
 }

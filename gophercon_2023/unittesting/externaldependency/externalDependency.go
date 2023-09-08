@@ -2,30 +2,10 @@ package external
 
 import (
 	"fmt"
-	caches "gophercon_2023/unittesting/externaldependency/cache"
+	"gophercon_2023/unittesting/externaldependency/cache"
 	database "gophercon_2023/unittesting/externaldependency/db"
 	"gophercon_2023/unittesting/externaldependency/model"
 )
-
-type RegistrationService interface {
-	Register(name, email, pass string) error
-}
-
-type DatastoreService interface {
-	Insert(model.Row) (model.Row, error)
-	Query(query string) []model.Row
-	Delete(primaryKey, table, schema string)
-}
-
-type CacheService interface {
-	Get(key string) string
-	Put(key string, value int) error
-	Delete(key string)
-}
-type register struct {
-	db    DatastoreService
-	cache CacheService
-}
 
 /* Register registers the user into database
 1. verify the same name does not exist
@@ -49,6 +29,26 @@ func (a *register) Register(name, email, encryptPass string) error {
 	return nil
 }
 
+type RegistrationService interface {
+	Register(name, email, pass string) error
+}
+
+type DatastoreService interface {
+	Insert(model.Row) (model.Row, error)
+	Query(query string) []model.Row
+	Delete(primaryKey, table, schema string)
+}
+
+type CacheService interface {
+	Get(key string) string
+	Put(key string, value int) error
+	Delete(key string)
+}
+type register struct {
+	db    DatastoreService
+	cache CacheService
+}
+
 /* Register registers the user into database
 1. verify the same name does not exist in cache
 2. put it in db
@@ -60,7 +60,7 @@ func RegisterNoInterface(name, email, encryptPass string) error {
 		return fmt.Errorf("The provided field is not valid")
 	}
 
-	if caches.Get(name) != "" {
+	if cache.Get(name) != "" {
 		return fmt.Errorf("Provided User Name is already taken")
 	}
 	r, err := database.Insert(model.Row{Name: name, Pass: encryptPass, Email: email})
@@ -68,7 +68,7 @@ func RegisterNoInterface(name, email, encryptPass string) error {
 		//log error
 		return fmt.Errorf("Internal Error,please retry!!")
 	}
-	caches.Put(r.Name, r.ID)
+	cache.Put(r.Name, r.ID)
 	return nil
 }
 

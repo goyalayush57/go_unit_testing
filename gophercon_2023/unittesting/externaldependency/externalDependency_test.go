@@ -33,7 +33,7 @@ func Test_register_Register_Impl(t *testing.T) {
 		setup func() (*gomock.Controller, *mocks.MockCacheService, *mocks.MockDatastoreService)
 	}{
 		{
-			name: "Username already exist",
+			name: "Username already exist in cache",
 			args: args{
 				name:  "alreadyTaken",
 				email: "xyz@gmail.com",
@@ -81,7 +81,7 @@ func Test_register_Register_Impl(t *testing.T) {
 				cacheMock.EXPECT().Put("first last", 3223)
 				return ctrl, cacheMock, dbMock
 			},
-			wantErr: false,
+			wantErr: false, //exact error
 		},
 	}
 	for _, tt := range tests {

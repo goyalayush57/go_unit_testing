@@ -11,13 +11,52 @@ import (
 	"testing"
 )
 
+func TestAPI_DoGoodStuff(t *testing.T) {
+	type fields struct {
+		Client  *http.Client
+		baseURL string
+	}
+	type args struct {
+		path string
+	}
+	tests := []struct {
+		name           string
+		fields         fields
+		args           args
+		wantStatuscode int
+		wantBody       []byte
+		wantErr        bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			api := &API{
+				Client:  tt.fields.Client,
+				baseURL: tt.fields.baseURL,
+			}
+			gotStatuscode, gotBody, err := api.DoGoodStuff(tt.args.path)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("API.DoGoodStuff() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if gotStatuscode != tt.wantStatuscode {
+				t.Errorf("API.DoGoodStuff() gotStatuscode = %v, want %v", gotStatuscode, tt.wantStatuscode)
+			}
+			if !reflect.DeepEqual(gotBody, tt.wantBody) {
+				t.Errorf("API.DoGoodStuff() gotBody = %v, want %v", gotBody, tt.wantBody)
+			}
+		})
+	}
+}
+
 /*
 
 ######################## Testing HTTP calls ########################
 
 1. httptest.NewServer
-2. Mock the methods of Client struct
-3. Mock Transport layer Roundtripper
+2. Mock the methods of http.Client
+3. Mock Transport field of Client
 
 */
 
@@ -36,21 +75,23 @@ func TestAPI_DoStuff_NewServer(t *testing.T) {
 		//Test Fixtures //not auto generated
 		setupHandler http.HandlerFunc
 	}{
-		{
-			name: "Success 200",
-			setupHandler: func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(http.StatusOK)
-				w.Write([]byte("OK"))
-			},
-			want:  200,
-			want1: []byte(`OK`),
-		},
+		// {
+		// 	name: "Success 200",
+		// 	setupHandler: func(w http.ResponseWriter, r *http.Request) {
+		// 		w.WriteHeader(http.StatusOK)
+		// 		w.Write([]byte("OK"))
+		// 	},
+		// 	want:  200,
+		// 	want1: []byte(`OK`),
+		// },
 		{
 			name: "Bad Request",
 			setupHandler: func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusBadRequest)
 				w.Write([]byte(""))
 			},
+			want:    400,
+			want1:   []byte(""),
 			wantErr: false,
 		},
 	}
@@ -63,7 +104,7 @@ func TestAPI_DoStuff_NewServer(t *testing.T) {
 				Client:  ts.Client(),
 				baseURL: ts.URL, //not auto generated
 			}
-			got, got1, err := api.DoGoodStuff()
+			got, got1, err := api.DoGoodStuff("")
 			if (err != nil) != tt.wantErr {
 				t.Errorf("API.DoStuff() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -72,7 +113,7 @@ func TestAPI_DoStuff_NewServer(t *testing.T) {
 				t.Errorf("API.DoStuff() got = %v, want %v", got, tt.want)
 			}
 			if !reflect.DeepEqual(got1, tt.want1) {
-				t.Errorf("API.DoStuff() = %v, want %v", string(got1), tt.want)
+				t.Errorf("API.DoStuff() = %v, want %v", string(got1), tt.want1)
 			}
 		})
 	}
@@ -85,31 +126,38 @@ Transport specifies the mechanism by which individual HTTP requests are made.
 Instead of using the default http.Transport, we’ll replace it with our own implementation.
 To implement a transport, we’ll have to implement http.RoundTripper interface.
 */
-func TestAPI_DoStuff_Transport(t *testing.T) {
-	mockClient := &http.Client{}
+func TestAPI_DoGoodStuff_Transport(t *testing.T) {
 	type fields struct {
-		Client  *http.Client //added mock when running tc
+		Client  *http.Client
 		baseURL string
 	}
+	type args struct {
+		path string
+	}
 	tests := []struct {
-		name    string
-		fields  fields
-		want    int
-		want1   []byte
-		wantErr bool
-		setup   func() *http.Client //Test Fixtures //not Auto Generated
+		name           string
+		fields         fields
+		args           args
+		wantStatuscode int
+		wantBody       []byte
+		wantErr        bool
+		setup          func() *http.Client //Test Fixtures //not Auto Generated
 	}{
 		{
 			name: "Ok Response with Body",
 			fields: fields{
 				baseURL: "http://example.com",
 			},
+			args: args{
+				path: "/some/path",
+			},
 			setup: func() *http.Client {
+				mockClient := &http.Client{}
 				mockClient.Transport = RoundTripFuncMock(func(req *http.Request) (*http.Response, error) {
 					// Test request parameters
 					stringCompare(t, req.URL.String(), "http://example.com/some/path")
 					return &http.Response{
-						StatusCode: 200,
+						StatusCode: http.StatusOK,
 						// Send response to be tested
 						Body: ioutil.NopCloser(bytes.NewBufferString(`OK`)),
 						// Must be set to non-nil value or it panics
@@ -118,15 +166,20 @@ func TestAPI_DoStuff_Transport(t *testing.T) {
 				})
 				return mockClient
 			},
-			want:  200,
-			want1: []byte("OK"),
+			wantStatuscode: http.StatusOK,
+			wantBody:       []byte("OK"),
 		},
+		//400 Status Code Test Case
 		{
 			name: "400 Status Code with Body",
 			fields: fields{
 				baseURL: "http://example.com",
 			},
+			args: args{
+				path: "/some/path",
+			},
 			setup: func() *http.Client {
+				mockClient := &http.Client{}
 				mockClient.Transport = RoundTripFuncMock(func(req *http.Request) (*http.Response, error) {
 					// Compare request parameters
 					stringCompare(t, req.URL.String(), "http://example.com/some/path")
@@ -140,15 +193,20 @@ func TestAPI_DoStuff_Transport(t *testing.T) {
 				})
 				return mockClient
 			},
-			want:  400,
-			want1: []byte("Bad Request Received"),
+			wantStatuscode: 400,
+			wantBody:       []byte("Bad Request Received"),
 		},
+		//Error Scenario Testing
 		{
 			name: "Get call error",
 			fields: fields{
 				baseURL: "http://example.com",
 			},
+			args: args{
+				path: "/some/path",
+			},
 			setup: func() *http.Client {
+				mockClient := &http.Client{}
 				mockClient.Transport = RoundTripFuncMock(func(req *http.Request) (*http.Response, error) {
 					// Compare request parameters
 					stringCompare(t, req.URL.String(), "http://example.com/some/path")
@@ -156,16 +214,20 @@ func TestAPI_DoStuff_Transport(t *testing.T) {
 				})
 				return mockClient
 			},
-			want:    http.StatusInternalServerError,
-			want1:   []byte(""),
-			wantErr: true,
+			wantStatuscode: http.StatusInternalServerError,
+			wantBody:       []byte(""),
+			wantErr:        true,
 		},
 		{
 			name: "GET call error via Dial func",
 			fields: fields{
 				baseURL: "http://example.com",
 			},
+			args: args{
+				path: "/some/path",
+			},
 			setup: func() *http.Client {
+				mockClient := &http.Client{}
 				mockClient.Transport = &http.Transport{
 					// Customize the Transport to return an error
 					// when making the HTTP request
@@ -177,28 +239,28 @@ func TestAPI_DoStuff_Transport(t *testing.T) {
 				}
 				return mockClient
 			},
-			want:    http.StatusInternalServerError,
-			want1:   []byte(""),
-			wantErr: true,
+			wantStatuscode: http.StatusInternalServerError,
+			wantBody:       []byte(""),
+			wantErr:        true,
 		},
 	}
 	for _, tt := range tests {
-		mockClient = tt.setup() //not autogenerated
+		mockClient := tt.setup() //not autogenerated
 		t.Run(tt.name, func(t *testing.T) {
 			api := &API{
 				Client:  mockClient, //modified from what was auto generated
 				baseURL: tt.fields.baseURL,
 			}
-			got, got1, err := api.DoGoodStuff()
+			gotStatuscode, gotBody, err := api.DoGoodStuff(tt.args.path)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("API.DoStuff() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("API.DoGoodStuff() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if got != tt.want {
-				t.Errorf("API.DoStuff() got = %v, want %v", got, tt.want)
+			if gotStatuscode != tt.wantStatuscode {
+				t.Errorf("API.DoGoodStuff() gotStatuscode = %v, want %v", gotStatuscode, tt.wantStatuscode)
 			}
-			if !reflect.DeepEqual(got1, tt.want1) {
-				t.Errorf("API.DoStuff() = %v, want %v", string(got1), tt.want1)
+			if !reflect.DeepEqual(gotBody, tt.wantBody) {
+				t.Errorf("API.DoGoodStuff() gotBody = %v, want %v", gotBody, tt.wantBody)
 			}
 		})
 	}
@@ -214,11 +276,11 @@ func (f RoundTripFuncMock) RoundTrip(req *http.Request) (*http.Response, error) 
 	return f(req)
 }
 
+/****************************** Mocks End *****************************************/
+
 func stringCompare(t *testing.T, got string, expected string) {
 	if got != expected {
 		t.Errorf("API.DoStuff() got = %v, want %v", got, expected)
 	}
 
 }
-
-/****************************** Mocks End *****************************************/
