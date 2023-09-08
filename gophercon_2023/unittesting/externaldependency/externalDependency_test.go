@@ -46,7 +46,7 @@ func Test_register_Register_Impl(t *testing.T) {
 				cacheMock.EXPECT().Get("alreadyTaken").Return("123")
 				return ctrl, cacheMock, dbMock
 			},
-			wantErr: true,
+			wantErr: true, //exact error
 		},
 		{
 			name: "Error in inserting data to db",
@@ -81,7 +81,7 @@ func Test_register_Register_Impl(t *testing.T) {
 				cacheMock.EXPECT().Put("first last", 3223)
 				return ctrl, cacheMock, dbMock
 			},
-			wantErr: false, //exact error
+			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
